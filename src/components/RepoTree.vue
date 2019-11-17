@@ -33,6 +33,14 @@
           >Select a folder</div>
           <v-card v-else class="pt-6 mx-auto" flat max-width="400">
             <v-card-text>{{selected.caption}}</v-card-text>
+            <v-vard-text v-if="selected.tclass == book">
+              <v-btn
+                class="ma-2"
+                outlined
+                color="indigo"
+                @click="openBook(selected)"
+              >{{selected.caption}}</v-btn>
+            </v-vard-text>
           </v-card>
         </v-scroll-y-transition>
       </v-col>
@@ -114,6 +122,13 @@ export default {
       } catch (err) {
         console.log(err);
       }
+    },
+
+    openBook(item) {
+      window.open(
+        `https://education.hana.ondemand.com/education/pub/s4/index.html#book!${item.uid}`,
+        '_blank',
+      );
     },
   },
 
