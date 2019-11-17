@@ -43,6 +43,7 @@
 
 <script>
 import Vue from 'vue';
+import Helper from '../helper/Helper';
 
 export default {
   data: () => ({
@@ -59,25 +60,23 @@ export default {
     },
     items: [],
     tree: [],
+    commonBaseInfo: undefined,
     selected: undefined,
   }),
 
   methods: {
-    callApi(uid) {
+    callApi(url) {
       const config = {
         headers: {
           Accept: 'application/json',
         },
       };
-      return this.axios.get(
-        `${process.env.BASE_URL}education/pub/s4/group/${uid}/entity.txt`,
-        config,
-      );
+      return this.axios.get(url, config);
     },
 
-    async getRepo(uid) {
+    async getRepo(url) {
       try {
-        const response = await this.callApi(uid);
+        const response = await this.callApi(url);
         const responseData = {
           tclass: response.data.tclass,
           uid: response.data.uid,
@@ -96,9 +95,27 @@ export default {
         return;
       }
       try {
-        const response = await this.callApi(selectedItem.uid);
+        const url = Helper.generateGroupUrl(
+          this.commonBaseInfo,
+          selectedItem.uid,
+        );
+        const response = await this.callApi(url);
         const responseData = response.data;
         Vue.set(selectedItem, 'children', responseData.assets);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    async getRepoInfo(url) {
+      try {
+        const response = await this.callApi(url);
+        this.commonBaseInfo = response.data;
+        const repoUrl = Helper.generateGroupUrl(
+          this.commonBaseInfo,
+          this.commonBaseInfo.root.uid,
+        );
+        this.getRepo(repoUrl);
       } catch (err) {
         console.log(err);
       }
@@ -106,8 +123,8 @@ export default {
   },
 
   mounted() {
-    console.log(process.env.BASE_URL);
-    this.getRepo('GR_5B103DE89EE75A1F8');
+    const loadUrl = Helper.getBaseInfoUrl();
+    this.getRepoInfo(loadUrl);
   },
 };
 </script>
