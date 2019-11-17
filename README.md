@@ -1,4 +1,4 @@
-# sap-tutorial-repo
+# Sample Repo Tree Project
 
 ## Project setup
 ```
