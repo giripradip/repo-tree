@@ -1,16 +1,16 @@
 <template>
   <div>
-    <HelloWorld/>
+    <RepoTree/>
   </div>
 </template>
 
 <script>
-import HelloWorld from '@/components/HelloWorld.vue';
+import RepoTree from '@/components/RepoTree.vue';
 
 export default {
   name: 'home',
   components: {
-    HelloWorld,
+    RepoTree,
   },
 };
 </script>
