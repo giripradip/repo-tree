@@ -9,13 +9,12 @@
           :items="items"
           item-key="caption"
           select
-          color="success"
           open-on-click
           transition
         >
           <template slot="label" slot-scope="{ item }">
             <div text class="item-container body-1" @click="repoSelected(item)">
-              <v-icon v-if="item.tclass == 'group'">mdi-folder</v-icon>
+              <v-icon v-if="item.tclass != book ">mdi-folder</v-icon>
               <v-icon v-else>mdi-file-pdf</v-icon>
               {{ item.caption }}
             </div>
@@ -44,22 +43,14 @@
 <script>
 import Vue from 'vue';
 import Helper from '../helper/Helper';
+import itemType from '../helper/ItemType';
 
 export default {
   data: () => ({
     open: [],
-    files: {
-      html: 'mdi-language-html5',
-      js: 'mdi-nodejs',
-      json: 'mdi-json',
-      md: 'mdi-markdown',
-      pdf: 'mdi-file-pdf',
-      png: 'mdi-file-image',
-      txt: 'mdi-file-document-outline',
-      xls: 'mdi-file-excel',
-    },
     items: [],
     tree: [],
+    book: itemType.BOOK,
     commonBaseInfo: undefined,
     selected: undefined,
   }),
@@ -92,6 +83,10 @@ export default {
     async repoSelected(selectedItem) {
       this.selected = selectedItem;
       if (selectedItem.children && selectedItem.children.length) {
+        return;
+      }
+      if (selectedItem.tclass !== itemType.GROUP) {
+        console.log('Not group= ', selectedItem);
         return;
       }
       try {
