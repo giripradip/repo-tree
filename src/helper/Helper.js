@@ -2,7 +2,7 @@
 
 export default class Helper {
   static getBaseUrl() {
-    return `${process.env.BASE_URL}education/pub/s4/`;
+    return 'https://education.hana.ondemand.com/education/pub/s4/';
   }
 
   static generateGroupUrl(commonBaseInfo, uid) {
