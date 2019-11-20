@@ -11,6 +11,11 @@ const routes = [
     component: Home,
   },
   {
+    path: '/preload',
+    name: 'Preload',
+    component: () => import('../components/PreLoadRepoTree.vue'),
+  },
+  {
     path: '/about',
     name: 'about',
     component: () => import('../views/About.vue'),
