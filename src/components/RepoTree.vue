@@ -7,15 +7,15 @@
           v-model="tree"
           :open="open"
           :items="items"
-          item-key="caption"
+          item-key="uid"
           select
           open-on-click
           transition
         >
           <template slot="label" slot-scope="{ item }">
             <div text class="item-container body-1" @click="repoSelected(item)">
-              <v-icon v-if="item.tclass != book ">mdi-folder</v-icon>
-              <v-icon v-else>mdi-file-pdf</v-icon>
+              <v-icon v-if="item.tclass == group ">{{files.group}}</v-icon>
+              <v-icon v-else>{{files[item.tclass]}}</v-icon>
               {{ item.caption }}
             </div>
           </template>
@@ -32,15 +32,15 @@
             style="align-self: center;"
           >Select a folder</div>
           <v-card v-else class="pt-6 mx-auto" flat max-width="400">
-            <v-card-text>{{selected.caption}}</v-card-text>
-            <v-vard-text v-if="selected.tclass == book">
+             <div>{{selected.caption}}</div>
+            <div v-if="selected.tclass != group">
               <v-btn
                 class="ma-2"
                 outlined
                 color="indigo"
                 @click="openBook(selected)"
               >{{selected.caption}}</v-btn>
-            </v-vard-text>
+            </div>
           </v-card>
         </v-scroll-y-transition>
       </v-col>
@@ -58,7 +58,14 @@ export default {
     open: [],
     items: [],
     tree: [],
+    files: {
+      group: 'mdi-folder',
+      book: 'mdi-book-open-page-variant',
+      slide: 'mdi-file-powerpoint',
+      project: 'mdi-lightbulb-on-outline',
+    },
     book: itemType.BOOK,
+    group: itemType.GROUP,
     commonBaseInfo: undefined,
     selected: undefined,
   }),
