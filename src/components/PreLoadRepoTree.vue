@@ -172,6 +172,7 @@ export default {
       const selectedArr = this.open.slice(-1); // selected item is stored in last index of array
       if (selectedArr.length) {
         const selectedItem = selectedArr[0];
+        this.selected = selectedItem;
         if (this.open.length >= this.openItemLength) {
           // avoids call on folder close
           this.repoSelected(selectedItem);
@@ -185,7 +186,6 @@ export default {
      * Avoids multiple request when folder is clicked many times
      */
     repoSelected(selectedItem) {
-      console.log('called');
       this.selected = selectedItem; // saves selected item
       if (!selectedItem.children) {
         // if no children no request is needed
