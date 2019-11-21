@@ -3,7 +3,7 @@
     <v-app-bar app color="primary" dark>
       <div class="menu-item-container">
         <v-btn text exact-active-class to="/">Home</v-btn>
-        <v-btn text exact-active-class to="/preload">Preload</v-btn>
+        <v-btn text exact-active-class to="/load">Simple Load</v-btn>
         <v-btn text exact-active-class to="/about">About</v-btn>
       </div>
     </v-app-bar>

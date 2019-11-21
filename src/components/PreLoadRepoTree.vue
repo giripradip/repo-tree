@@ -60,10 +60,10 @@ import temClickedHandler from '../helper/ItemClickedHandler';
 
 export default {
   data: () => ({
+    tree: [],
     open: [],
     active: [],
     items: [],
-    tree: [],
     files: {
       group: 'mdi-folder',
       groupOpen: 'mdi-folder-open',
