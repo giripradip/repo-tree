@@ -13,15 +13,16 @@
           select
           open-on-click
           transition
+          @update:open="onFolderToggle"
         >
-          <template slot="label" slot-scope="{ item, open }">
-            <div text class="item-container body-1" @click="repoSelected(item)">
+          <template v-slot:prepend="{ item, open }">
+            <div text class="item-container">
               <v-icon v-if="item.tclass == group">
                 {{ open ? files.groupOpen : files.group }}
               </v-icon>
               <v-icon v-else>{{files[item.tclass]}}</v-icon>
-              {{ item.caption }}
             </div>
+            <div class="caption-container"> {{ item.caption }} </div>
           </template>
         </v-treeview>
       </v-col>
@@ -71,6 +72,7 @@ export default {
       slide: 'mdi-file-powerpoint',
       project: 'mdi-lightbulb-on-outline',
     },
+    openItemLength: 1,
     book: itemType.BOOK,
     group: itemType.GROUP,
     commonBaseInfo: undefined,
@@ -154,8 +156,23 @@ export default {
     },
 
     /**
-     * Function to handle repo clicked event
+     * Function to handle repo clicked event and open and collapsed event
+     * Get selected item object from open array
      * Calls a methods to preload child info of selected item
+     */
+    onFolderToggle() {
+      const selectedArr = this.open.slice(-1); // selected item is stored in last index of array
+      if (selectedArr && selectedArr.length) {
+        const selectedItem = selectedArr[0];
+        if (this.open.length >= this.openItemLength) { // avoids call on folder close
+          this.repoSelected(selectedItem);
+        }
+        this.openItemLength = this.open.length;
+      }
+    },
+
+    /**
+     * Function to call a methods to preload child info of selected item
      * Avoids multiple request when folder is clicked many times
      */
     repoSelected(selectedItem) {
@@ -209,5 +226,9 @@ export default {
 .item-container {
   display: flex;
   flex-wrap: wrap;
+}
+.caption-container {
+  padding-left: 5px;
+  font-size: 1.0em;
 }
 </style>
