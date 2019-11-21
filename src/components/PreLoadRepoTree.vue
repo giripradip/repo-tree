@@ -5,16 +5,20 @@
       <v-col cols="5">
         <v-treeview
           v-model="tree"
-          :open="open"
           :items="items"
+          :return-object="true"
+          :active.sync="active"
+          :open.sync="open"
           item-key="uid"
           select
           open-on-click
           transition
         >
-          <template slot="label" slot-scope="{ item }">
+          <template slot="label" slot-scope="{ item, open }">
             <div text class="item-container body-1" @click="repoSelected(item)">
-              <v-icon v-if="item.tclass == group ">{{files.group}}</v-icon>
+              <v-icon v-if="item.tclass == group">
+                {{ open ? files.groupOpen : files.group }}
+              </v-icon>
               <v-icon v-else>{{files[item.tclass]}}</v-icon>
               {{ item.caption }}
             </div>
@@ -49,17 +53,20 @@
 </template>
 
 <script>
-// import Vue from 'vue';
 import Helper from '../helper/Helper';
+import RepoService from '../Service/RepoService';
 import itemType from '../helper/ItemType';
+import temClickedHandler from '../helper/ItemClickedHandler';
 
 export default {
   data: () => ({
     open: [],
+    active: [],
     items: [],
     tree: [],
     files: {
       group: 'mdi-folder',
+      groupOpen: 'mdi-folder-open',
       book: 'mdi-book-open-page-variant',
       slide: 'mdi-file-powerpoint',
       project: 'mdi-lightbulb-on-outline',
@@ -70,43 +77,67 @@ export default {
     selected: undefined,
   }),
 
+  mounted() {
+    // lifecycle hooks called when page is ready
+    this.getBaseInfoForRepo(Helper.getBaseInfoUrl());
+  },
+
   methods: {
-    callApi(url) {
-      const config = {
-        headers: {
-          Accept: 'application/json',
-        },
-      };
-      return this.axios.get(url, config);
+    /**
+     * Function to get basic information for requesting repo information.
+     * The response contains uid, entity_filename and tclass for root repo
+     */
+    async getBaseInfoForRepo(url) {
+      try {
+        const response = await RepoService.getRepoInfo(url);
+        this.commonBaseInfo = response.data; // save the common information for other request
+        const repoUrl = Helper.generateGroupUrl(
+          // creating url for getting root element
+          this.commonBaseInfo,
+          this.commonBaseInfo.root.uid,
+        );
+        this.getRootLevelRepo(repoUrl); // request for getting root level repo
+      } catch (err) {
+        console.log(err);
+      }
     },
 
-    async getRepo(url) {
+    /**
+     * Function to get the root level repo by calling api
+     * The response contains uid, tclass and assets
+     * assets is converted into children to display in the tree
+     */
+    async getRootLevelRepo(url) {
       try {
-        const response = await this.callApi(url);
+        const response = await RepoService.getRepoInfo(url);
         const responseData = {
           tclass: response.data.tclass,
           uid: response.data.uid,
           caption: response.data.caption,
           children: response.data.assets,
         };
+        // updates the item array which contains all the tree information
         this.items.push(responseData);
-        this.callPostRepo(this.items[0].children);
+        // children of root leve is sent to get thier child info
+        this.postChildrenInfo(this.items[0].children);
       } catch (err) {
         console.log(err);
       }
     },
 
-    async callPostRepo(children) {
-      const childrenData = children.map(item => ({
-        method: 'GET',
-        url: `group/${item.uid}/entity.txt`,
-        body: {},
-      }));
+    /**
+     * Function to post children data for getting their children info
+     * This is used for preloading information when folder is selected
+     */
+    async postChildrenInfo(children) {
+      const response = await RepoService.postChildrenInfo(children);
+      this.updateChildrenInfo(response);
+    },
 
-      const req = { request: childrenData };
-      const url = `${Helper.getBaseUrl()}multiple_request`;
-      const response = await this.axios.post(url, req);
-
+    /**
+     * Function to parse child of child info which is later updated in the dom
+     */
+    updateChildrenInfo(response) {
       const formatedData = response.data.response.map((item) => {
         const obj = {
           children: Array.isArray(item.assets) ? item.assets.slice() : [],
@@ -118,87 +149,58 @@ export default {
       if (!this.selected) {
         this.items[0].children = formatedData;
       } else {
-        this.selected.children = formatedData;
+        this.selected.children = formatedData; // replaces the children data of selected item
       }
     },
 
-    async repoSelected(selectedItem) {
-      this.selected = selectedItem;
+    /**
+     * Function to handle repo clicked event
+     * Calls a methods to preload child info of selected item
+     * Avoids multiple request when folder is clicked many times
+     */
+    repoSelected(selectedItem) {
+      this.selected = selectedItem; // saves selected item
       if (!selectedItem.children) {
+        // if no children no request is needed
         return;
       }
       const hasAlreadyChildren = selectedItem.children.every(
         item => item.children && item.children.length,
       );
       if (hasAlreadyChildren) {
+        // Avoid preload call if already has children
         return;
       }
       const notAllGroup = selectedItem.children.every(
         item => item.tclass !== itemType.GROUP,
       );
       if (notAllGroup) {
+        // Avoid preload call if children are not group type
         return;
       }
       try {
-        const groupChildren = selectedItem.children.filter(
+        // do not include in a request if children contains item other than group
+        const groupTypeChildren = selectedItem.children.filter(
           child => child.tclass === itemType.GROUP,
         );
-        this.callPostRepo(groupChildren);
+        this.postChildrenInfo(groupTypeChildren); // make a preload request
       } catch (err) {
         console.log(err);
       }
     },
 
-    async getRepoInfo(url) {
-      try {
-        const response = await this.callApi(url);
-        this.commonBaseInfo = response.data;
-        const repoUrl = Helper.generateGroupUrl(
-          this.commonBaseInfo,
-          this.commonBaseInfo.root.uid,
-        );
-        this.getRepo(repoUrl);
-      } catch (err) {
-        console.log(err);
-      }
-    },
-
+    /**
+     * Function to handle item clicked event if the item is not type of group
+     * The other type are project, slide and book
+     * Generates url and open link in new tab
+     */
     itemClicked(item) {
-      switch (item.tclass) {
-        case itemType.BOOK:
-          this.openExternalLink(
-            `${Helper.getBaseUrl()}index.html#book!${item.uid}`,
-          );
-          break;
-
-        case itemType.PROJECT:
-          this.openExternalLink(
-            `${Helper.getBaseUrl()}index.html#project!${item.uid}`,
-          );
-          break;
-
-        case itemType.SLIDE:
-          this.openExternalLink(
-            `${Helper.getBaseUrl()}index.html#slide!${item.uid}`,
-          );
-          break;
-
-        default:
-          break;
-      }
+      temClickedHandler(item);
     },
-
-    openExternalLink(link) {
-      window.open(link, '_blank');
-    },
-  },
-
-  mounted() {
-    const loadUrl = Helper.getBaseInfoUrl();
-    this.getRepoInfo(loadUrl);
   },
 };
 </script>
+
 <style scoped>
 .container-box {
   margin: 25px;
