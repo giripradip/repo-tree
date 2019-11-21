@@ -5,16 +5,20 @@
       <v-col cols="5">
         <v-treeview
           v-model="tree"
-          :open="open"
           :items="items"
+          :return-object="true"
+          :active.sync="active"
+          :open.sync="open"
           item-key="uid"
           select
           open-on-click
           transition
         >
-          <template slot="label" slot-scope="{ item }">
+          <template slot="label" slot-scope="{ item, open }">
             <div text class="item-container body-1" @click="repoSelected(item)">
-              <v-icon v-if="item.tclass == group ">{{files.group}}</v-icon>
+              <v-icon v-if="item.tclass == group">
+                {{ open ? files.groupOpen : files.group }}
+                </v-icon>
               <v-icon v-else>{{files[item.tclass]}}</v-icon>
               {{ item.caption }}
             </div>
@@ -32,13 +36,13 @@
             style="align-self: center;"
           >Select a folder</div>
           <v-card v-else class="pt-6 mx-auto" flat max-width="400">
-             <div>{{selected.caption}}</div>
+            <div>{{selected.caption}}</div>
             <div v-if="selected.tclass != group">
               <v-btn
                 class="ma-2"
                 outlined
                 color="indigo"
-                @click="openBook(selected)"
+                @click="itemClicked(selected)"
               >{{selected.caption}}</v-btn>
             </div>
           </v-card>
@@ -51,15 +55,19 @@
 <script>
 import Vue from 'vue';
 import Helper from '../helper/Helper';
+import RepoService from '../Service/RepoService';
 import itemType from '../helper/ItemType';
+import temClickedHandler from '../helper/ItemClickedHandler';
 
 export default {
   data: () => ({
-    open: [],
-    items: [],
     tree: [],
+    open: [],
+    active: [],
+    items: [],
     files: {
       group: 'mdi-folder',
+      groupOpen: 'mdi-folder-open',
       book: 'mdi-book-open-page-variant',
       slide: 'mdi-file-powerpoint',
       project: 'mdi-lightbulb-on-outline',
@@ -70,19 +78,30 @@ export default {
     selected: undefined,
   }),
 
+  mounted() {
+    // lifecycle hooks called when page is ready
+    this.getBaseInfoForRepo(Helper.getBaseInfoUrl());
+  },
+
   methods: {
-    callApi(url) {
-      const config = {
-        headers: {
-          Accept: 'application/json',
-        },
-      };
-      return this.axios.get(url, config);
+    async getBaseInfoForRepo(url) {
+      try {
+        const response = await RepoService.getRepoInfo(url);
+        this.commonBaseInfo = response.data; // save the common information for other request
+        const repoUrl = Helper.generateGroupUrl(
+          // creating url for getting root element
+          this.commonBaseInfo,
+          this.commonBaseInfo.root.uid,
+        );
+        this.getRootLevelRepo(repoUrl); // request for getting root level repo
+      } catch (err) {
+        console.log(err);
+      }
     },
 
-    async getRepo(url) {
+    async getRootLevelRepo(url) {
       try {
-        const response = await this.callApi(url);
+        const response = await RepoService.getRepoInfo(url);
         const responseData = {
           tclass: response.data.tclass,
           uid: response.data.uid,
@@ -109,7 +128,7 @@ export default {
           this.commonBaseInfo,
           selectedItem.uid,
         );
-        const response = await this.callApi(url);
+        const response = await RepoService.getRepoInfo(url);
         const responseData = response.data;
         Vue.set(selectedItem, 'children', responseData.assets);
       } catch (err) {
@@ -117,31 +136,9 @@ export default {
       }
     },
 
-    async getRepoInfo(url) {
-      try {
-        const response = await this.callApi(url);
-        this.commonBaseInfo = response.data;
-        const repoUrl = Helper.generateGroupUrl(
-          this.commonBaseInfo,
-          this.commonBaseInfo.root.uid,
-        );
-        this.getRepo(repoUrl);
-      } catch (err) {
-        console.log(err);
-      }
+    handleItemClick(item) {
+      temClickedHandler(item);
     },
-
-    openBook(item) {
-      window.open(
-        `https://education.hana.ondemand.com/education/pub/s4/index.html#book!${item.uid}`,
-        '_blank',
-      );
-    },
-  },
-
-  mounted() {
-    const loadUrl = Helper.getBaseInfoUrl();
-    this.getRepoInfo(loadUrl);
   },
 };
 </script>
