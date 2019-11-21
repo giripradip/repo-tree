@@ -19,10 +19,15 @@
             <div text class="item-container">
               <v-icon v-if="item.tclass == group">
                 {{ open ? files.groupOpen : files.group }}
-              </v-icon>
-              <v-icon v-else>{{files[item.tclass]}}</v-icon>
+                </v-icon>
             </div>
-            <div class="caption-container"> {{ item.caption }} </div>
+            <div v-if="item.tclass == group" class="caption-container">
+                {{ item.caption }}
+              </div>
+            <div v-else class="caption-container" @click="repoSelected(item)">
+              <v-icon>{{files[item.tclass]}}</v-icon>
+              {{ item.caption }}
+            </div>
           </template>
         </v-treeview>
       </v-col>
@@ -54,7 +59,7 @@
 </template>
 
 <script>
-import Helper from '../helper/Helper';
+import UrlHelper from '../helper/UrlHelper';
 import RepoService from '../Service/RepoService';
 import itemType from '../helper/ItemType';
 import temClickedHandler from '../helper/ItemClickedHandler';
@@ -81,7 +86,7 @@ export default {
 
   mounted() {
     // lifecycle hooks called when page is ready
-    this.getBaseInfoForRepo(Helper.getBaseInfoUrl());
+    this.getBaseInfoForRepo(UrlHelper.getBaseInfoUrl());
   },
 
   methods: {
@@ -93,7 +98,7 @@ export default {
       try {
         const response = await RepoService.getRepoInfo(url);
         this.commonBaseInfo = response.data; // save the common information for other request
-        const repoUrl = Helper.generateGroupUrl(
+        const repoUrl = UrlHelper.generateGroupUrl(
           // creating url for getting root element
           this.commonBaseInfo,
           this.commonBaseInfo.root.uid,
@@ -112,11 +117,14 @@ export default {
     async getRootLevelRepo(url) {
       try {
         const response = await RepoService.getRepoInfo(url);
+        const {
+          tclass, uid, caption, assets: children,
+        } = response.data; // object destructring
         const responseData = {
-          tclass: response.data.tclass,
-          uid: response.data.uid,
-          caption: response.data.caption,
-          children: response.data.assets,
+          tclass,
+          uid,
+          caption,
+          children,
         };
         // updates the item array which contains all the tree information
         this.items.push(responseData);
@@ -162,9 +170,10 @@ export default {
      */
     onFolderToggle() {
       const selectedArr = this.open.slice(-1); // selected item is stored in last index of array
-      if (selectedArr && selectedArr.length) {
+      if (selectedArr.length) {
         const selectedItem = selectedArr[0];
-        if (this.open.length >= this.openItemLength) { // avoids call on folder close
+        if (this.open.length >= this.openItemLength) {
+          // avoids call on folder close
           this.repoSelected(selectedItem);
         }
         this.openItemLength = this.open.length;
@@ -176,6 +185,7 @@ export default {
      * Avoids multiple request when folder is clicked many times
      */
     repoSelected(selectedItem) {
+      console.log('called');
       this.selected = selectedItem; // saves selected item
       if (!selectedItem.children) {
         // if no children no request is needed
@@ -229,6 +239,6 @@ export default {
 }
 .caption-container {
   padding-left: 5px;
-  font-size: 1.0em;
+  font-size: 1em;
 }
 </style>

@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Helper from '../helper/Helper';
+import UrlHelper from '../helper/UrlHelper';
 
 export default class RepoService {
   static getConfig() {
@@ -21,8 +21,8 @@ export default class RepoService {
       body: {},
     }));
 
-    const req = { request: childrenData };
-    const url = `${Helper.getBaseUrl()}multiple_request`;
-    return Vue.axios.post(url, req);
+    const requestObject = { request: childrenData };
+    const url = `${UrlHelper.BASE_URL}/multiple_request`;
+    return Vue.axios.post(url, requestObject, RepoService.getConfig());
   }
 }

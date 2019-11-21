@@ -54,7 +54,7 @@
 
 <script>
 import Vue from 'vue';
-import Helper from '../helper/Helper';
+import UrlHelper from '../helper/UrlHelper';
 import RepoService from '../Service/RepoService';
 import itemType from '../helper/ItemType';
 import temClickedHandler from '../helper/ItemClickedHandler';
@@ -80,7 +80,7 @@ export default {
 
   mounted() {
     // lifecycle hooks called when page is ready
-    this.getBaseInfoForRepo(Helper.getBaseInfoUrl());
+    this.getBaseInfoForRepo(UrlHelper.getBaseInfoUrl());
   },
 
   methods: {
@@ -88,7 +88,7 @@ export default {
       try {
         const response = await RepoService.getRepoInfo(url);
         this.commonBaseInfo = response.data; // save the common information for other request
-        const repoUrl = Helper.generateGroupUrl(
+        const repoUrl = UrlHelper.generateGroupUrl(
           // creating url for getting root element
           this.commonBaseInfo,
           this.commonBaseInfo.root.uid,
@@ -124,7 +124,7 @@ export default {
         return;
       }
       try {
-        const url = Helper.generateGroupUrl(
+        const url = UrlHelper.generateGroupUrl(
           this.commonBaseInfo,
           selectedItem.uid,
         );
