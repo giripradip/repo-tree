@@ -84,6 +84,10 @@ export default {
   },
 
   methods: {
+    /**
+     * Function to get basic information for requesting repo information.
+     * The response contains uid, entity_filename and tclass for root repo
+     */
     async getBaseInfoForRepo(url) {
       try {
         const response = await RepoService.getRepoInfo(url);
@@ -99,6 +103,11 @@ export default {
       }
     },
 
+    /**
+     * Function to get the root level repo by calling api
+     * The response contains uid, tclass and assets
+     * assets is converted into children to display in the tree
+     */
     async getRootLevelRepo(url) {
       try {
         const response = await RepoService.getRepoInfo(url);
@@ -114,6 +123,10 @@ export default {
       }
     },
 
+    /**
+     * Function to call a methods to preload child info of selected item
+     * Avoids multiple request when folder is clicked many times
+     */
     async repoSelected(selectedItem) {
       this.selected = selectedItem;
       if (selectedItem.children && selectedItem.children.length) {
@@ -136,6 +149,11 @@ export default {
       }
     },
 
+    /**
+     * Function to handle item clicked event if the item is not type of group
+     * The other type are project, slide and book
+     * Generates url and open link in new tab
+     */
     handleItemClick(item) {
       temClickedHandler(item);
     },
